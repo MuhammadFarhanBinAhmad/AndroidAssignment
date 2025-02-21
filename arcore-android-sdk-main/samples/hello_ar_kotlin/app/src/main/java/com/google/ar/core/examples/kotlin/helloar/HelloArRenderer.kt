@@ -204,31 +204,16 @@ class HelloArRenderer(val activity: HelloArActivity) :
       pointCloudMesh =
         Mesh(render, Mesh.PrimitiveMode.POINTS, /*indexBuffer=*/ null, pointCloudVertexBuffers)
 
-      // Virtual object to render (ARCore pawn)
       virtualObjectAlbedoTexture =
         Texture.createFromAsset(
           render,
-          "models/pawn_albedo.png",
+          "models/Oak_Tree.jpg",
           Texture.WrapMode.CLAMP_TO_EDGE,
           Texture.ColorFormat.SRGB
         )
 
-      virtualObjectAlbedoInstantPlacementTexture =
-        Texture.createFromAsset(
-          render,
-          "models/pawn_albedo_instant_placement.png",
-          Texture.WrapMode.CLAMP_TO_EDGE,
-          Texture.ColorFormat.SRGB
-        )
 
-      val virtualObjectPbrTexture =
-        Texture.createFromAsset(
-          render,
-          "models/pawn_roughness_metallic_ao.png",
-          Texture.WrapMode.CLAMP_TO_EDGE,
-          Texture.ColorFormat.LINEAR
-        )
-      virtualObjectMesh = Mesh.createFromAsset(render, "models/pawn.obj")
+      virtualObjectMesh = Mesh.createFromAsset(render, "models/Oak_Tree.obj")
       virtualObjectShader =
         Shader.createFromAssets(
             render,
@@ -237,7 +222,6 @@ class HelloArRenderer(val activity: HelloArActivity) :
             mapOf("NUMBER_OF_MIPMAP_LEVELS" to cubemapFilter.numberOfMipmapLevels.toString())
           )
           .setTexture("u_AlbedoTexture", virtualObjectAlbedoTexture)
-          .setTexture("u_RoughnessMetallicAmbientOcclusionTexture", virtualObjectPbrTexture)
           .setTexture("u_Cubemap", cubemapFilter.filteredCubemapTexture)
           .setTexture("u_DfgTexture", dfgTexture)
     } catch (e: IOException) {

@@ -59,4 +59,12 @@ dependencies {
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+
+    implementation 'com.gorisse.thomas.sceneform:sceneform:1.21.0'
+
+    implementation 'com.google.android.filament:filament-android:1.36.0'
+    implementation 'com.google.android.filament:gltfio-android:1.36.0'
+    implementation 'androidx.room:room-common:2.6.1'
+    implementation 'androidx.room:room-ktx:2.6.1'
+
 }
