@@ -46,6 +46,13 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 
 
+//this is a singleton used by the renderer to know which object to draw
+//found in handleTap function
+object meshIndex
+{
+  var index: Int = 0;
+}
+
 /**
  * This is a simple example that shows how to create an augmented reality (AR) application using the
  * ARCore API. The application will display any detected planes and will allow the user to tap on a
@@ -203,6 +210,7 @@ class HelloArActivity : AppCompatActivity() {
       setOnClickListener {
         if (currentIndex > 0) {
           currentIndex--
+          meshIndex.index = currentIndex
           updateCanvas()
           updateCanvasButtonImage(showCanvasButton) // Update button image
         }
@@ -216,6 +224,7 @@ class HelloArActivity : AppCompatActivity() {
       setOnClickListener {
         if (currentIndex < TreeData.treeList.size - 1) {
           currentIndex++
+          meshIndex.index = currentIndex
           updateCanvas()
           updateCanvasButtonImage(showCanvasButton) // Update button image
         }

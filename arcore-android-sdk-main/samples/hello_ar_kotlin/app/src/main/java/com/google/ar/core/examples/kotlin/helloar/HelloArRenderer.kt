@@ -49,6 +49,8 @@ import com.google.ar.core.exceptions.NotYetAvailableException
 import java.io.IOException
 import java.nio.ByteBuffer
 
+val fileNames: List<String> = listOf("Oak_Tree", "Palm_Tree", "Bottom_T")
+
 /** Renders the HelloAR application using our example Renderer. */
 class HelloArRenderer(val activity: HelloArActivity) :
   SampleRender.Renderer, DefaultLifecycleObserver {
@@ -108,6 +110,9 @@ class HelloArRenderer(val activity: HelloArActivity) :
   lateinit var virtualObjectShader: Shader
   lateinit var virtualObjectAlbedoTexture: Texture
   lateinit var virtualObjectAlbedoInstantPlacementTexture: Texture
+
+  lateinit var virtualObjectMeshList: MutableList<Mesh>
+  lateinit var virtualObjectAlbedoTextureList: MutableList<Texture>
 
   private val wrappedAnchors = mutableListOf<WrappedAnchor>()
 
@@ -224,6 +229,24 @@ class HelloArRenderer(val activity: HelloArActivity) :
           .setTexture("u_AlbedoTexture", virtualObjectAlbedoTexture)
           .setTexture("u_Cubemap", cubemapFilter.filteredCubemapTexture)
           .setTexture("u_DfgTexture", dfgTexture)
+
+      for(i in 0 until fileNames.size)
+      {
+        //create the textuers
+        virtualObjectAlbedoTextureList.add(
+          Texture.createFromAsset(
+            render,
+            "models/${fileNames[i]}.jpg",
+            Texture.WrapMode.CLAMP_TO_EDGE,
+            Texture.ColorFormat.SRGB
+          )
+        )
+
+        //create the mesh
+        virtualObjectMeshList.add(
+          Mesh.createFromAsset(render, "models/${fileNames[i]}.obj")
+        )
+      }
     } catch (e: IOException) {
       Log.e(TAG, "Failed to read a required asset file", e)
       showError("Failed to read a required asset file: $e")
@@ -385,10 +408,10 @@ class HelloArRenderer(val activity: HelloArActivity) :
         ) {
           virtualObjectAlbedoInstantPlacementTexture
         } else {
-          virtualObjectAlbedoTexture
+          virtualObjectAlbedoTextureList[meshIndex.index]
         }
       virtualObjectShader.setTexture("u_AlbedoTexture", texture)
-      render.draw(virtualObjectMesh, virtualObjectShader, virtualSceneFramebuffer)
+      render.draw(virtualObjectMeshList[meshIndex.index], virtualObjectShader, virtualSceneFramebuffer)
     }
 
     // Compose the virtual scene with the background.
@@ -517,4 +540,5 @@ class HelloArRenderer(val activity: HelloArActivity) :
 private data class WrappedAnchor(
   val anchor: Anchor,
   val trackable: Trackable,
+  val index: Int = 0, //this is to determine which mesh to draw
 )
