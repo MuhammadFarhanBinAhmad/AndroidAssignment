@@ -230,6 +230,10 @@ class HelloArRenderer(val activity: HelloArActivity) :
           .setTexture("u_Cubemap", cubemapFilter.filteredCubemapTexture)
           .setTexture("u_DfgTexture", dfgTexture)
 
+      //Init the 2 lists
+      virtualObjectMeshList = mutableListOf()
+      virtualObjectAlbedoTextureList = mutableListOf()
+
       for(i in 0 until fileNames.size)
       {
         //create the textuers
