@@ -39,8 +39,12 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.LinearLayout
 import android.view.Gravity
+import android.view.View
 import android.widget.FrameLayout
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.core.content.ContextCompat
+
 
 /**
  * This is a simple example that shows how to create an augmented reality (AR) application using the
@@ -61,53 +65,22 @@ class HelloArActivity : AppCompatActivity() {
   private var mediaPlayer1: MediaPlayer? = null
   private var mediaPlayer2: MediaPlayer? = null
 
-  private lateinit var treeDao: TreeDao
+  // UI Elements for displaying tree data
+  private lateinit var treeNameTextView: TextView
+  private lateinit var treeInfoTextView: TextView
+  private lateinit var treeImageView: ImageView
+  private lateinit var canvasOverlay: View
+
   private var trees: List<Tree> = emptyList()
   private var currentIndex = 0
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+    setContentView(R.layout.activity_main)  // Ensure your XML layout has the correct ID
 
     // Create MediaPlayer instance with the audio file from res/raw
     mediaPlayer1 = MediaPlayer.create(this, R.raw.birds)
     mediaPlayer2 = MediaPlayer.create(this, R.raw.rainforest)
-
-    //Button Stuff Start
-    // Initialize Room Database
-    val db = TreeDatabase.getDatabase(this)
-    treeDao = db.treeDao()
-
-    // Fetch trees from database in background
-    Thread {
-      trees = treeDao.getAllTrees()
-    }.start()
-
-    // "Show Canvas" Button - Display tree data
-    showCanvasButton.setOnClickListener {
-      if (canvasOverlay.visibility == View.VISIBLE) {
-        canvasOverlay.visibility = View.GONE
-      } else {
-        canvasOverlay.visibility = View.VISIBLE
-        updateCanvas()
-      }
-    }
-
-    // Left Button - Browse previous tree
-    LeftButton.setOnClickListener {
-      if (trees.isNotEmpty()) {
-        currentIndex = (currentIndex - 1 + trees.size) % trees.size
-        updateCanvas()
-      }
-    }
-
-    // Right Button - Browse next tree
-    RightButton.setOnClickListener {
-      if (trees.isNotEmpty()) {
-        currentIndex = (currentIndex + 1) % trees.size
-        updateCanvas()
-      }
-    }
-    //Button Stuff End
 
     // Setup ARCore session lifecycle helper and configuration.
     arCoreSessionHelper = ARCoreSessionLifecycleHelper(this)
@@ -151,92 +124,115 @@ class HelloArActivity : AppCompatActivity() {
     // Helper function to convert dp to pixels.
     fun dpToPx(dp: Int): Int = (dp * resources.displayMetrics.density).toInt()
 
+// Initialize Room Database and treeDao
+/*
+    val db = TreeDatabase.getDatabase(this)
+*/
+    //treeDao = db.treeDao()
 
+/*// Fetch trees from database in background
+    Thread {
+      trees = treeDao.getAllTrees()
+      // Optionally update the UI on the main thread:
+      runOnUiThread {
+        if (trees.isNotEmpty()) {
+          //updateCanvas() // Display first tree data
+        }
+      }
+    }.start()*/
 
-// Create a horizontal LinearLayout to hold both buttons
-    val buttonLayout = LinearLayout(this).apply {
+    // Add the button layout to the root view
+    val rootView = findViewById<ViewGroup>(android.R.id.content)
+
+    // Inflate the canvas overlay layout (initially hidden).
+    canvasOverlay = LayoutInflater.from(this).inflate(R.layout.canvas_overlay, rootView, false)
+    canvasOverlay.visibility = View.GONE
+    rootView.addView(canvasOverlay)
+
+    val buttonContainer = LinearLayout(this).apply {
       orientation = LinearLayout.HORIZONTAL
       layoutParams = FrameLayout.LayoutParams(
         FrameLayout.LayoutParams.WRAP_CONTENT,
         FrameLayout.LayoutParams.WRAP_CONTENT
       ).apply {
-        gravity = Gravity.BOTTOM or Gravity.START  // Position at the bottom left
-        leftMargin = dpToPx(16)
-        bottomMargin = dpToPx(16)
+        gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL  // Align buttons to bottom-center
+        bottomMargin = dpToPx(24)  // Adjust spacing from bottom
       }
     }
 
-    // Create the second button (New Button beside Show Canvas)
-    val LeftButton = Button(this).apply {
-      text = "Next"
-      textSize = 12f  // Adjust text size as needed (in sp)
 
-      // Load the drawable and set custom size
-      val drawable = ContextCompat.getDrawable(context, R.drawable.left_arrow)
-      val drawableSize = dpToPx(24)  // Keep the image at 24dp x 24dp
-      drawable?.setBounds(0, 0, drawableSize, drawableSize)
 
-      // Set the drawable to the left of the text
-      setCompoundDrawables(drawable, null, null, null)
-      compoundDrawablePadding = dpToPx(4)  // Space between text and icon
+    // Initialize TextViews and ImageView
+    treeNameTextView = canvasOverlay.findViewById(R.id.name_text)
+    treeInfoTextView = canvasOverlay.findViewById(R.id.TreeInfo)
+    treeImageView = canvasOverlay.findViewById(R.id.imageView)
 
-      layoutParams = LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.WRAP_CONTENT,
-        LinearLayout.LayoutParams.WRAP_CONTENT
-      ).apply {
-        leftMargin = dpToPx(8)  // Space between the two buttons
-      }
+
+
+    fun updateCanvasButtonImage(button: Button) {
+      val currentTree = TreeData.treeList[currentIndex]
+      val drawable = ContextCompat.getDrawable(this, currentTree.imageRes)
+      drawable?.setBounds(0, 0, dpToPx(24), dpToPx(24)) // Resize image
+      button.setCompoundDrawables(drawable, null, null, null)
     }
-// Create the first button (Show Canvas)
+
+
+// Create the Open Canvas Button
     val showCanvasButton = Button(this).apply {
-      text = "OpenScene"
-      textSize = 12f  // Adjust text size as needed (in sp)
+      text = "Open Scene"
+      textSize = 12f
 
-      // Get and scale the drawable.
-      val drawable = ContextCompat.getDrawable(context, R.drawable.raintree)
-      val drawableSize = dpToPx(24)  // desired drawable size, e.g., 24dp by 24dp
-      drawable?.setBounds(0, 0, drawableSize, drawableSize)
-      // Set the drawable on the left; the other positions are null.
-      setCompoundDrawables(drawable, null, null, null)
-      compoundDrawablePadding = dpToPx(4) // space between image and text
+      updateCanvasButtonImage(this) // Set initial image
+
+      setOnClickListener {
+        if (canvasOverlay.visibility == View.VISIBLE) {
+          canvasOverlay.visibility = View.GONE
+          text = "Open Canvas"
+        } else {
+          canvasOverlay.visibility = View.VISIBLE
+          text = "Close Canvas"
+          updateCanvas()
+        }
+      }
     }
 
-    val RightButton = Button(this).apply {
+    // Create the Left Button (Previous)
+    val leftButton = Button(this).apply {
+      text = "Previous"
+      textSize = 12f
+      setOnClickListener {
+        if (currentIndex > 0) {
+          currentIndex--
+          updateCanvas()
+          updateCanvasButtonImage(showCanvasButton) // Update button image
+        }
+      }
+    }
+
+// Create the Right Button (Next)
+    val rightButton = Button(this).apply {
       text = "Next"
-      textSize = 12f  // Adjust text size as needed (in sp)
-
-      // Load the drawable and set custom size
-      val drawable = ContextCompat.getDrawable(context, R.drawable.right_arrow)
-      val drawableSize = dpToPx(24)  // Keep the image at 24dp x 24dp
-      drawable?.setBounds(0, 0, drawableSize, drawableSize)
-
-      // Set the drawable to the left of the text
-      setCompoundDrawables(drawable, null, null, null)
-      compoundDrawablePadding = dpToPx(4)  // Space between text and icon
-
-      layoutParams = LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.WRAP_CONTENT,
-        LinearLayout.LayoutParams.WRAP_CONTENT
-      ).apply {
-        leftMargin = dpToPx(8)  // Space between the two buttons
+      textSize = 12f
+      setOnClickListener {
+        if (currentIndex < TreeData.treeList.size - 1) {
+          currentIndex++
+          updateCanvas()
+          updateCanvasButtonImage(showCanvasButton) // Update button image
+        }
       }
     }
 
 
 
-// Add both buttons to the horizontal layout
-    buttonLayout.addView(LeftButton)
-    buttonLayout.addView(showCanvasButton)
-    buttonLayout.addView(RightButton)
+// Add buttons to the container
+    buttonContainer.addView(leftButton)
+    buttonContainer.addView(showCanvasButton)
+    buttonContainer.addView(rightButton)
 
-// Add the button layout to the root view
-    val rootView = view.root as ViewGroup
-    rootView.addView(buttonLayout)
+// Add the container to the root layout
+    rootView.addView(buttonContainer)
 
-    // Inflate the canvas overlay layout (initially hidden).
-    val canvasOverlay = LayoutInflater.from(this).inflate(R.layout.canvas_overlay, rootView, false)
-    canvasOverlay.visibility = android.view.View.GONE
-    rootView.addView(canvasOverlay)
+
 
     // When the button is clicked, display the overlay.
     showCanvasButton.setOnClickListener {
@@ -249,21 +245,14 @@ class HelloArActivity : AppCompatActivity() {
       }
     }
 
-    // Set up the "X" button inside the overlay to hide it.
-/*    val closeButton = canvasOverlay.findViewById<Button>(R.id.close_button)
-    closeButton.setOnClickListener {
-      canvasOverlay.visibility = android.view.View.GONE
-    }*/
-
   }
 
-  // Function to update the canvas with current tree
+  // Update the canvas overlay with current tree data
   private fun updateCanvas() {
-    if (trees.isNotEmpty()) {
-      val tree = trees[currentIndex]
-      treeNameTextView.text = tree.name
-      treeInfoTextView.text = tree.info
-    }
+    val tree = TreeData.treeList[currentIndex]
+    treeNameTextView.text = tree.name
+    treeInfoTextView.text = tree.info
+    treeImageView.setImageResource(tree.imageRes)
   }
 
   override fun onStart() {
@@ -271,7 +260,6 @@ class HelloArActivity : AppCompatActivity() {
     // Start playing the audio
     mediaPlayer1?.start()
     mediaPlayer2?.start()
-
   }
   override fun onStop() {
     super.onStop()

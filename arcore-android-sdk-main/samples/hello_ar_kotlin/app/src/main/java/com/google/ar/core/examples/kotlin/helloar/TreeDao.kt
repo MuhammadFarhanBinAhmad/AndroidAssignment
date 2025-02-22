@@ -4,6 +4,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 
+/*
 @Dao
 interface TreeDao {
     @Query("SELECT * FROM trees")
@@ -11,4 +12,4 @@ interface TreeDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertAll(vararg trees: Tree)
-}
+}*/
