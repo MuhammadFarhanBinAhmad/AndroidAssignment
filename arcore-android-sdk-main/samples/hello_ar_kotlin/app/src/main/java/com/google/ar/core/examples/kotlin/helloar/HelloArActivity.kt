@@ -61,12 +61,53 @@ class HelloArActivity : AppCompatActivity() {
   private var mediaPlayer1: MediaPlayer? = null
   private var mediaPlayer2: MediaPlayer? = null
 
+  private lateinit var treeDao: TreeDao
+  private var trees: List<Tree> = emptyList()
+  private var currentIndex = 0
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
     // Create MediaPlayer instance with the audio file from res/raw
     mediaPlayer1 = MediaPlayer.create(this, R.raw.birds)
     mediaPlayer2 = MediaPlayer.create(this, R.raw.rainforest)
+
+    //Button Stuff Start
+    // Initialize Room Database
+    val db = TreeDatabase.getDatabase(this)
+    treeDao = db.treeDao()
+
+    // Fetch trees from database in background
+    Thread {
+      trees = treeDao.getAllTrees()
+    }.start()
+
+    // "Show Canvas" Button - Display tree data
+    showCanvasButton.setOnClickListener {
+      if (canvasOverlay.visibility == View.VISIBLE) {
+        canvasOverlay.visibility = View.GONE
+      } else {
+        canvasOverlay.visibility = View.VISIBLE
+        updateCanvas()
+      }
+    }
+
+    // Left Button - Browse previous tree
+    LeftButton.setOnClickListener {
+      if (trees.isNotEmpty()) {
+        currentIndex = (currentIndex - 1 + trees.size) % trees.size
+        updateCanvas()
+      }
+    }
+
+    // Right Button - Browse next tree
+    RightButton.setOnClickListener {
+      if (trees.isNotEmpty()) {
+        currentIndex = (currentIndex + 1) % trees.size
+        updateCanvas()
+      }
+    }
+    //Button Stuff End
 
     // Setup ARCore session lifecycle helper and configuration.
     arCoreSessionHelper = ARCoreSessionLifecycleHelper(this)
@@ -215,6 +256,16 @@ class HelloArActivity : AppCompatActivity() {
     }*/
 
   }
+
+  // Function to update the canvas with current tree
+  private fun updateCanvas() {
+    if (trees.isNotEmpty()) {
+      val tree = trees[currentIndex]
+      treeNameTextView.text = tree.name
+      treeInfoTextView.text = tree.info
+    }
+  }
+
   override fun onStart() {
     super.onStart()
     // Start playing the audio
