@@ -248,7 +248,7 @@ class HelloArRenderer(val activity: HelloArActivity) :
 
         //create the mesh
         virtualObjectMeshList.add(
-          Mesh.createFromAsset(render, "models/${fileNames[i]}.obj")
+          Mesh.createFromAsset(render, "models/${fileNames[i]}_Updated.obj")
         )
       }
     } catch (e: IOException) {
