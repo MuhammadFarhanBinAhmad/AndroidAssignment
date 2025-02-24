@@ -393,7 +393,7 @@ class HelloArRenderer(val activity: HelloArActivity) :
 
     // Visualize anchors created by touch.
     render.clear(virtualSceneFramebuffer, 0f, 0f, 0f, 0f)
-    for ((anchor, trackable) in
+    for ((anchor, trackable, idx) in
       wrappedAnchors.filter { it.anchor.trackingState == TrackingState.TRACKING }) {
       // Get the current pose of an Anchor in world space. The Anchor pose is updated
       // during calls to session.update() as ARCore refines its estimate of the world.
@@ -412,10 +412,10 @@ class HelloArRenderer(val activity: HelloArActivity) :
         ) {
           virtualObjectAlbedoInstantPlacementTexture
         } else {
-          virtualObjectAlbedoTextureList[meshIndex.index]
+          virtualObjectAlbedoTextureList[idx]
         }
       virtualObjectShader.setTexture("u_AlbedoTexture", texture)
-      render.draw(virtualObjectMeshList[meshIndex.index], virtualObjectShader, virtualSceneFramebuffer)
+      render.draw(virtualObjectMeshList[idx], virtualObjectShader, virtualSceneFramebuffer)
     }
 
     // Compose the virtual scene with the background.
@@ -517,7 +517,7 @@ class HelloArRenderer(val activity: HelloArActivity) :
     if (firstHitResult != null) {
       // Cap the number of objects created. This avoids overloading both the
       // rendering system and ARCore.
-      if (wrappedAnchors.size >= 20) {
+      if (wrappedAnchors.size >= 200) {
         wrappedAnchors[0].anchor.detach()
         wrappedAnchors.removeAt(0)
       }
@@ -525,7 +525,7 @@ class HelloArRenderer(val activity: HelloArActivity) :
       // Adding an Anchor tells ARCore that it should track this position in
       // space. This anchor is created on the Plane to place the 3D model
       // in the correct position relative both to the world and to the plane.
-      wrappedAnchors.add(WrappedAnchor(firstHitResult.createAnchor(), firstHitResult.trackable))
+      wrappedAnchors.add(WrappedAnchor(firstHitResult.createAnchor(), firstHitResult.trackable, meshIndex.index))
 
       // For devices that support the Depth API, shows a dialog to suggest enabling
       // depth-based occlusion. This dialog needs to be spawned on the UI thread.
